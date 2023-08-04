@@ -1,0 +1,9 @@
+{
+  "name": "Alfa",
+  "version": "1.0.0",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "node-telegram-bot-api": "^0.61.0",
+    "nodemailer": "^6.9.4"
+  }
+}
