@@ -9,6 +9,11 @@
       "full" : "6453648775:AAHCOVfYgyhrwknVDGoTg6a4Wie8mr-bbhw",
       "api_token" : "AAHCOVfYgyhrwknVDGoTg6a4Wie8mr-bbhw",
       "low" : "6453648775"
+    },
+    "prod_info" : {
+      "full" : "6580514428:AAH2mJNpIwQoKk66wtw1q4Z74bbu3Qf7fsE",
+      "api_token" : "AAH2mJNpIwQoKk66wtw1q4Z74bbu3Qf7fsE",
+      "low" : "6580514428"
     }
   },
   "prefix" : "null",
