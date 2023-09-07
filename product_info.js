@@ -7,74 +7,77 @@ const TelegramBot = require('node-telegram-bot-api'),
     key = config.key.prod_info.full,
     storage = require("./lib/local_storage/filesystem");
 
+global.XMLHttpRequest = require('xhr2');
 const {callbackPromise} = require("nodemailer/lib/shared");
 
 const client = new TelegramBot(key, {
     polling: true,
 });
+
 getSheetsData()
+getProductData_debet();
+getProductData_credit();
+getProductData_etc();
+getProductData_nine();
+
+let debet_keyboard = createKeyboard('dk');
+let credit_keyboard = createKeyboard('kk');
+let etc_keyboard = createKeyboard('etc');
+let nine_keyboard = createKeyboard('nine');
+
+setInterval(() => {
+    getSheetsData()
+    getProductData_debet();
+    getProductData_credit();
+    getProductData_etc();
+    getProductData_nine();
+
+    debet_keyboard = createKeyboard('dk');
+    credit_keyboard = createKeyboard('kk');
+    etc_keyboard = createKeyboard('etc');
+    nine_keyboard = createKeyboard('nine');
+}, 30000)
 
 setInterval(() => getSheetsData(), 30000)
 
-client.on("message",  async (message) => {
-
-});
 const options = {
     parse_mode: "Markdown",
     reply_markup: JSON.stringify({
         keyboard: [
-            [{ text: 'КК 60 дней без %', callback_data: '1', action : 'one' }],
+            [{ text: 'Кредитные карты', callback_data: '1', action : 'one' }],
             [{ text: 'Дебетовые карты', callback_data: '2', action : 'two' }],
-            [{ text: 'Автокредит' , callback_data: '3', action : 'three' }],
-            [{ text: 'Ипотека' , callback_data: '4', action : 'four' }],
-            [{ text: 'Кредитный лимит' , callback_data: '5', action : 'five' }],
-            [{ text: 'ММБ', callback_data: '7' }],
-            [{ text: 'Назад', callback_data: 'to_home' }]
+            [{ text: 'Код 911' , callback_data: '3', action : 'three' }],
+            [{ text: 'Остальное' , callback_data: '3', action : 'three' }],
         ]
     })
 };
 
-const dk = {
+const kk = {
     parse_mode: "Markdown",
     reply_markup: JSON.stringify({
         keyboard: [
-            [{ text: 'Дебетовая обычная' }],
-            [{ text: 'Дебетовая AlfaTravel' }],
-            [{ text: 'Дебетовая AlfaTravel Premium' }],
-            [{ text: 'Дебетовая Alfa Premium' }],
-            [{ text: 'Дебетовая детская' }],
-            [{ text: 'Стикер AlfaKids (детский)' }],
-            [{ text: 'Стикер Alfa' }],
-            [{ text: 'Стикер AlfaTravel' }],
+            [{ text: 'Кредитная карта с целым годом без %' }],
+            [{ text: 'Кредитная карта Alfa Travel' }],
+            [{ text: 'Кредитная карта билайн 365 дней без %' }],
+            [{ text: 'Кредитная карта 60 без % на всё' }],
+            [{ text: 'Кредитные Х5 Карты Пятёрочка и Перекрёсток' }],
             [{ text: 'Назад' }]
         ]
     })
-}
-const kk = {
-
 }
 
 const branch = {
     reply_markup: JSON.stringify({
         keyboard: [
+            [{ text: 'Продукты банкa', callback_data: 'info_errDos', action : 'new' }],
             [{ text: 'Ручная выдачa', callback_data: 'info_prod', action : 'new' }],
             [{ text: 'YП', callback_data: 'info_err', action : 'new' }],
-            [{ text: 'Мотивaция', callback_data: '6' }],
-            [{ text: 'Продукты банкa', callback_data: 'info_errDos', action : 'new' }],
             [{ text: 'Частые ошибки', callback_data: 'info_errDos', action : 'new' }],
             [{ text: '911 - основное', callback_data: 'info_errDos', action : 'new' }],
+            [{ text: 'Мотивaция', callback_data: '6' }],
         ]
     })
 }
-
-const x = {
-    reply_markup: JSON.stringify({
-        inline_keyboard: [
-            [{ text: 'В начало', callback_data: 'to_back', action : 'one' }],
-        ]
-    })
-}
-
 /**
  *
  * @param KK1 : 1
@@ -92,13 +95,121 @@ client.onText(/\/start/, function (msg, match) {
             .then(function (info) {
                 console.log(msg.from.username)
             })
-    client.sendMessage(msg.chat.id, 'Выбирай'  , branch)
+    client.sendMessage(msg.chat.id, 'Выбирай'  , options)
         .then(r => client.sendMessage(msg.chat.id , r))
         .then(() => client.deleteMessage(msg.chat.id, msg.from.id))
         .finally(
             () => client.deleteMessage(msg.chat.id, msg.message_id)
         );
 });
+
+async function createKeyboard(type) {
+    let
+        array_dk = [],
+        array_kk = [],
+        array_etc = [],
+        array_nine = [],
+        readyButtonsList_dk = [],
+        readyButtonsList_kk = [],
+        readyButtonsList_etc = [],
+        readyButtonsList_nine = [];
+
+    let buttonBack = 'Назад';
+
+    getProductData_debet().forEach(element => {
+        Object.keys(element[0]).forEach(jKey => {
+            array_dk.push(jKey)
+            console.log(jKey)
+        })
+    })
+    array_dk.forEach(element => {
+        readyButtonsList_dk.push(`${element.trim()}`)
+    })
+    readyButtonsList_dk.push(`${buttonBack}`)
+
+    getProductData_credit().forEach(element => {
+        Object.keys(element[0]).forEach(jKey => {
+            array_kk.push(jKey)
+            console.log(jKey)
+        })
+    })
+    array_kk.forEach(element => {
+        readyButtonsList_kk.push(`${element.trim()}`)
+    })
+    readyButtonsList_kk.push(`${buttonBack}`);
+
+    getProductData_etc().forEach(element => {
+        Object.keys(element[0]).forEach(jKey => {
+            array_etc.push(jKey)
+            console.log(jKey)
+        })
+    })
+    array_etc.forEach(element => {
+        readyButtonsList_etc.push(`${element.trim()}`)
+    })
+    readyButtonsList_etc.push(`${buttonBack}`);
+
+    getProductData_nine().forEach(element => {
+        Object.keys(element[0]).forEach(jKey => {
+            array_nine.push(jKey)
+            console.log(jKey)
+        })
+    })
+    array_nine.forEach(element => {
+        readyButtonsList_nine.push(`${element.trim()}`)
+    })
+    readyButtonsList_nine.push(`${buttonBack}`);
+
+
+    console.log(readyButtonsList_dk)
+    const dkKeyboard = {
+        parse_mode: "Markdown",
+        resize_keyboard: true,
+        reply_markup: {
+            keyboard: readyButtonsList_dk.map(val => [{
+                text: val
+            }])
+        }
+    }
+    const kkKeyboard = {
+        parse_mode: "Markdown",
+        resize_keyboard: true,
+        reply_markup: {
+            keyboard: readyButtonsList_kk.map(val => [{
+                text: val
+            }])
+        }
+    }
+
+    const etcKeyboard = {
+        parse_mode: "Markdown",
+        resize_keyboard: true,
+        reply_markup: {
+            keyboard: readyButtonsList_etc.map(val => [{
+                text: val
+            }])
+        }
+    }
+
+    const nineKeyboard = {
+        parse_mode: "Markdown",
+        resize_keyboard: true,
+        reply_markup: {
+            keyboard: readyButtonsList_nine.map(val => [{
+                text: val
+            }])
+        }
+    }
+
+    if (type === 'kk')
+        return kkKeyboard
+    else if (type === 'dk')
+        return dkKeyboard
+    else if (type === 'etc')
+        return etcKeyboard
+    else if (type === 'nine')
+        return nineKeyboard
+}
 
 client.on('callback_query', async function (msg) {
     let answer = await msg.data;
@@ -121,16 +232,6 @@ client.on('callback_query', async function (msg) {
     }
 })
 
-function closeKeyboard(msg) {
-    client.editMessageText(msg.message.text,
-        {message_id:msg.message.message_id , chat_id:msg.from.id,
-            reply_markup: {
-                remove_keyboard: true
-            }}).catch((err) => {
-        //some error handling
-    })
-}
-
 function getSheetsData() {
     let sName = 'userList'
     let sID = '1NVAMwDq462DhcDfVKDKcYuhH63U7jDCaY6jrAg8TAi8';
@@ -151,9 +252,8 @@ function getSheetsData() {
             console.log(dataFinal)
             fs.writeFileSync(`${__dirname}/udata.json`, JSON.stringify(dataFinal));
         })
-    console.log("dataUpdated")
+    console.log("dataUpdated");
 }
-
 
 client.on("message", async function (msg) {
     let data = fs.readFileSync(`${__dirname}/udata.json`);
@@ -162,103 +262,305 @@ client.on("message", async function (msg) {
     for (const el of JSON.parse(data)) {
         if (el === a) {
             console.log("approved")
+            let i = 0;
+            getProductData_debet().forEach(element => {
+                Object.keys(element[0]).forEach(jKey => {
+                    console.log(msg.text.trim() + " == " + jKey.trim())
+                    console.log(msg.text.trim().length + "_===_" + jKey.trim().length)
+                    if (jKey.replace(/^a-zA-Z0-9 ]/g, '').trim() === msg.text.replace(/^a-zA-Z0-9 ]/g, '').trim())
+                        client.sendMessage(msg.chat.id , element[0][jKey].toString())
+                            .then(() => client.deleteMessage(msg.from.id, msg.message_id))
+                })
+                i++;
+            })
+            getProductData_credit().forEach(element => {
+                Object.keys(element[0]).forEach(jKey => {
+                    console.log(msg.text.trim() + " == " + jKey.trim())
+                    console.log(msg.text.trim().length + "_===_" + jKey.trim().length)
+                    if (jKey.replace(/^a-zA-Z0-9 ]/g, '').trim() === msg.text.replace(/^a-zA-Z0-9 ]/g, '').trim())
+                        client.sendMessage(msg.chat.id , element[0][jKey].toString())
+                            .then(() => client.deleteMessage(msg.from.id, msg.message_id))
+                })
+                i++;
+            })
 
-            if (msg.text === "Ручная выдачa")
-                await client.sendMessage(msg.chat.id, ls["processing"][0]["av"])
-                    //.then(client.sendDocument(msg.chat.id, './docs/kk.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Продукты банкa")
+            getProductData_etc().forEach(element => {
+                Object.keys(element[0]).forEach(jKey => {
+                    console.log(msg.text.trim() + " == " + jKey.trim())
+                    console.log(msg.text.trim().length + "_===_" + jKey.trim().length)
+                    if (jKey.replace(/^a-zA-Z0-9 ]/g, '').trim() === msg.text.replace(/^a-zA-Z0-9 ]/g, '').trim())
+                        client.sendMessage(msg.chat.id , element[0][jKey].toString())
+                            .then(() => client.deleteMessage(msg.from.id, msg.message_id))
+                })
+                i++;
+            })
+
+            getProductData_nine().forEach(element => {
+                Object.keys(element[0]).forEach(jKey => {
+                    console.log(msg.text.trim() + " == " + jKey.trim())
+                    console.log(msg.text.trim().length + "_===_" + jKey.trim().length)
+                    if (jKey.replace(/^a-zA-Z0-9 ]/g, '').trim() === msg.text.replace(/^a-zA-Z0-9 ]/g, '').trim())
+                        client.sendMessage(msg.chat.id , element[0][jKey].toString())
+                            .then(() => client.deleteMessage(msg.from.id, msg.message_id))
+                })
+                i++;
+            })
+//\u3164
+            if (msg.text === "Продукты банкa")
                 await client.sendMessage(msg.chat.id,'Продукты банка', options)
                     // .then(client.sendDocument(msg.chat.id, './docs/kk.pdf'))
                     .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "YП")
-                await client.sendMessage(msg.chat.id, ls["processing"][0]["up"])
-                    .then(() => client.sendMessage(msg.chat.id, ls["processing"][0]["updvd"]))
-                    .then(() => client.sendDocument(msg.chat.id, './docs/kk.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-
-            else if (msg.text === "Частые ошибки")
-                await client.sendMessage(msg.chat.id,ls["errors"][0]["all"])
-                    // .then(client.sendDocument(msg.chat.id, './docs/kk.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "911 - основное")
-                await client.sendMessage(msg.chat.id,ls["911"][0]["all"])
-                    // .then(client.sendDocument(msg.chat.id, './docs/kk.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-
-            // 904894186
-
-            if (msg.text === "КК 60 дней без %")
-                await client.sendMessage(msg.chat.id, ls["prod_info"][0][0])
-                    .then(client.sendDocument(msg.chat.id, './docs/kk.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
             else if (msg.text === "Дебетовые карты")
-                await client.sendMessage(msg.chat.id, 'дебет' ,dk)
-                    .then((r) => console.log(r))
-                    .finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            //.finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Автокредит")
-                await client.sendMessage(msg.chat.id, ls["prod_info"][2][0])
-                    .then(client.sendDocument(msg.chat.id, './docs/cl.pdf'))
-                    .then((r) => console.log(r))
-                    .finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Ипотека")
-                client.sendMessage(msg.chat.id, ls["prod_info"][3][0])
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Кредитный лимит")
-                await client.sendMessage(msg.chat.id, ls["prod_info"][4][0])
-                    .then(client.sendDocument(msg.chat.id, './docs/kl.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Мотивaция")
-                client.sendMessage(msg.chat.id, ls["prod_info"][5][0])
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "ММБ")
-                client.sendMessage(msg.chat.id, ls["prod_info"][6][0])
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-
+                await client.sendMessage(msg.chat.id, 'Дебетовые карты: ' ,await debet_keyboard)
+                    .then(() => client.deleteMessage(msg.from.id, msg.message_id)
+                    .then((r) => console.log(r)))
+            else if (msg.text === "Кредитные карты")
+                await client.sendMessage(msg.chat.id, 'Кредитные карты: ' ,await credit_keyboard)
+                    .then(() => client.deleteMessage(msg.from.id, msg.message_id)
+                    .then((r) => console.log(r)))
+            else if (msg.text === "Остальное")
+                await client.sendMessage(msg.chat.id, 'Остальное: ' ,await etc_keyboard)
+                        .then(() => client.deleteMessage(msg.from.id, msg.message_id)
+                            .then((r) => console.log(r))
+                                .then(() => console.log("message_deleted")))
+            else if (msg.text === "Код 911")
+                await client.sendMessage(msg.chat.id, 'остальное' ,await nine_keyboard)
+                    .then(() => client.deleteMessage(msg.from.id, msg.message_id)
+                    .then((r) => console.log(r)))
             else if (msg.text === "Назад")
-                client.sendMessage(msg.chat.id, 'Выбирай', branch)
-                    .then(r => console.log(r))
-                    .finally(() => client.deleteMessage(msg.chat.id, msg.message_id))
-
-            // DEBETOVKI
-
-            else if (msg.text === "Дебетовая обычная")
-                await client.sendMessage(msg.chat.id, ls["product_data"][0]["dk"][0])
-                    .then(client.sendDocument(msg.chat.id, './docs/dk/dk_alfa_default.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Дебетовая AlfaTravel")
-                await client.sendMessage(msg.chat.id, ls["product_data"][0]["dk"][1])
-                    .then(client.sendDocument(msg.chat.id, './docs/dk/dk_alfatravel_default.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Дебетовая AlfaTravel Premium")
-                await client.sendMessage(msg.chat.id, ls["product_data"][0]["dk"][2])
-                    .then(client.sendDocument(msg.chat.id, './docs/dk/dk_alfatravel_premium.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Дебетовая Alfa Premium")
-                await client.sendMessage(msg.chat.id, ls["product_data"][0]["dk"][3])
-                    .then(client.sendDocument(msg.chat.id, './docs/dk/dk_alfatravel_premium.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Дебетовая детская")
-                await client.sendMessage(msg.chat.id, ls["product_data"][0]["dk"][4])
-                    .then(client.sendDocument(msg.chat.id, './docs/dk/dk_alfatravel_premium.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Стикер AlfaKids (детский)")
-                await client.sendMessage(msg.chat.id, ls["product_data"][0]["dk"][5])
-                    .then(client.sendDocument(msg.chat.id, './docs/dk/dk_alfatravel_premium.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Стикер Alfa")
-                await client.sendMessage(msg.chat.id, ls["product_data"][0]["dk"][6])
-                    .then(client.sendDocument(msg.chat.id, './docs/dk/dk_alfatravel_premium.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            else if (msg.text === "Стикер AlfaTravel")
-                await client.sendMessage(msg.chat.id, ls["product_data"][0]["dk"][7])
-                    .then(client.sendDocument(msg.chat.id, './docs/dk/dk_alfatravel_premium.pdf'))
-                    .then((r) => console.log(r)).finally(() => client.deleteMessage(msg.chat.id, msg.message_id));
-            break;
+                await client.sendMessage(msg.chat.id, 'Назад', options)
+                    .then(() => client.deleteMessage(msg.from.id, msg.message_id)
+                    .then((r) => console.log(r)))
         }else{
             console.log("denied")
         }
     }
-    console.log(msg.text)
 });
+
+function getProductData_debet(){
+    function getProductData_debetCardsContent () {
+        let sName = 'debetCards'
+        let sID = '1NVAMwDq462DhcDfVKDKcYuhH63U7jDCaY6jrAg8TAi8';
+        let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
+        let qRaw = 'Select *';
+        let qRea = encodeURIComponent(qRaw);
+        let qUri = `${base}&sheet=${sName}&tq=${qRea}`;
+        let dataFinal = []
+        let xhr = new XMLHttpRequest();
+        xhr.open('get', qUri, true);
+        xhr.send()
+        xhr.onload = () => {
+            let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
+            for (let i = 1; i < data.table.rows.length; i++){
+                dataFinal.push(
+                    `${data.table.rows[i].c[0].v} |||| ${data.table.rows[i].c[1].v}`
+                );
+            }
+            // console.log(data.table.rows[1].c[0].v)
+            // console.log(dataFinal)
+            fs.writeFileSync(`${__dirname}/pdata.json`, JSON.stringify(dataFinal));
+        }
+    }
+    getProductData_debetCardsContent();
+    function dataParser() {
+        let data = fs.readFileSync(`${__dirname}/pdata.json`);
+        let finalData = [];
+        let finalData2 = [];
+        JSON.parse(data).forEach(element => {
+            // console.log(element)
+            // console.log("===================================================")
+            // console.log(element.split("||||"))
+            finalData.push(element.split("||||"))
+        });
+        finalData.forEach(element => {
+            let elName = element[0]
+            let elemready = {
+                [elName]: `${element[1].trim()}`
+            }
+            finalData2.push([elemready])
+        })
+        return finalData2;
+    }
+    return dataParser();
+}
+
+function getProductData_credit(){
+    function getProductData_creditCardsContent () {
+        let sName = 'creditCards'
+        let sID = '1NVAMwDq462DhcDfVKDKcYuhH63U7jDCaY6jrAg8TAi8';
+        let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
+        let qRaw = 'Select *';
+        let qRea = encodeURIComponent(qRaw);
+        let qUri = `${base}&sheet=${sName}&tq=${qRea}`;
+        let dataFinal = []
+        let xhr = new XMLHttpRequest();
+        xhr.open('get', qUri);
+        xhr.send()
+        xhr.onload = () => {
+            let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
+
+            for (let i = 1; i < data.table.rows.length; i++){
+                dataFinal.push(
+                    `${data.table.rows[i].c[0].v} |||| ${data.table.rows[i].c[1].v}`
+                );
+            }
+
+            fs.writeFileSync(`${__dirname}/p_credit_data.json`, JSON.stringify(dataFinal), {
+                recursive: true
+            });
+        }
+    }
+
+    getProductData_creditCardsContent();
+
+    function dataParser() {
+        let data = fs.readFileSync(`${__dirname}/p_credit_data.json`);
+        let finalData = [];
+        let finalData2 = [];
+        JSON.parse(data).forEach(element => {
+            finalData.push(element.split("||||"))
+        });
+        finalData.forEach(element => {
+            let elName = element[0]
+            let elemready = {
+                [elName]: `${element[1].trim()}`
+            }
+            finalData2.push([elemready])
+        })
+        return finalData2;
+    }
+    return dataParser();
+}
+
+function getProductData_nine(){
+    function getProductData_nineContent () {
+        let sName = 'nineCode';
+        let sID = '1NVAMwDq462DhcDfVKDKcYuhH63U7jDCaY6jrAg8TAi8';
+        let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
+        let qRaw = 'Select *';
+        let qRea = encodeURIComponent(qRaw);
+        let qUri = `${base}&sheet=${sName}&tq=${qRea}`;
+        let dataFinal = []
+        let xhr = new XMLHttpRequest();
+        xhr.open('get', qUri, true);
+        xhr.send()
+        xhr.onload = () => {
+            let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
+            for (let i = 1; i < data.table.rows.length; i++){
+                dataFinal.push(
+                    `${data.table.rows[i].c[0].v} |||| ${data.table.rows[i].c[1].v}`
+                );
+            }
+
+            fs.writeFileSync(`${__dirname}/p_nine_data.json`, JSON.stringify(dataFinal));
+        }
+    }
+    getProductData_nineContent();
+
+    function dataParser() {
+        let data = fs.readFileSync(`${__dirname}/p_nine_data.json`);
+        let finalData = [];
+        let finalData2 = [];
+        JSON.parse(data).forEach(element => {
+            finalData.push(element.split("||||"))
+        });
+        finalData.forEach(element => {
+            let elName = element[0]
+            let elemready = {
+                [elName]: `${element[1].trim()}`
+            }
+            finalData2.push([elemready])
+        })
+        return finalData2;
+    }
+    return dataParser();
+}
+
+function getProductData_etc(){
+    function getProductData_etcContent () {
+        let sName = 'etcInfo';
+        let sID = '1NVAMwDq462DhcDfVKDKcYuhH63U7jDCaY6jrAg8TAi8';
+        let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
+        let qRaw = 'Select *';
+        let qRea = encodeURIComponent(qRaw);
+        let qUri = `${base}&sheet=${sName}&tq=${qRea}`;
+        let dataFinal = []
+        let xhr = new XMLHttpRequest();
+        xhr.open('get', qUri, true);
+        xhr.send()
+        xhr.onload = () => {
+            let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
+            for (let i = 1; i < data.table.rows.length; i++){
+                dataFinal.push(
+                    `${data.table.rows[i].c[0].v} |||| ${data.table.rows[i].c[1].v}`
+                );
+            }
+
+            fs.writeFileSync(`${__dirname}/p_etc_data.json`, JSON.stringify(dataFinal));
+        }
+    }
+    getProductData_etcContent();
+
+    function dataParser() {
+        let data = fs.readFileSync(`${__dirname}/p_etc_data.json`);
+        let finalData = [];
+        let finalData2 = [];
+        JSON.parse(data).forEach(element => {
+            finalData.push(element.split("||||"))
+        });
+        finalData.forEach(element => {
+            let elName = element[0]
+            let elemready = {
+                [elName]: `${element[1].trim()}`
+            }
+            finalData2.push([elemready])
+        })
+        return finalData2;
+    }
+    return dataParser();
+}
+
+/***
+ * Отчет
+ * Добавлены кк х5 и билайн
+ * Добавлены 911 и Остальное: {
+ *     УП, Ручная выдача
+ * }
+ * Добавлено удаление сообщений
+ * после нажатия кнопок
+ * Изменения клавиатуры {
+ *     добавлено под 911 & остальное
+ *     исправлена главная
+ * }
+ * Добавлено автообновление материала (30 сек)
+ * исправлены баги
+ *
+ */
+
+// Краткая инфа:
+// добавил 911 и "остальное"
+// каждые 30 секунд меняется клава и инфа(не проверено)
+// листы:
+//     etcInfo : Остальное (пока только УП и Ручная)
+//     debetCards: Дебетовые карты
+//     creditCards: Кредитные карты
+//     nineCode: код 911
+//     userList: лист пользователей(вайт лист)
+// обновление бота(для глобальных изменений):
+//     1. очистить историю
+//     2. /start
+//     больше ничего не требуется
+//
+// ИНФО О ПРОДУКТАХ И НОВЫЕ КНОПКИ ДОБАВЛЕНЫЕ В ГУГЛ ЛИСТАХ
+// ОБНОВЯТСЯ САМИ В ТЕЧЕНИИ 30СЕКУНД
+//
+// Все дальнейшие изменения нужно согласовать,
+//     сможем сделать или нет.
+//
+// Планируется:
+//     1. Удалять историю у убранных из вайтлиста пользователей
+//     2. Дополнение инфы
+//     3. Добавление презентаций к информации о продукте (динамически)
+//     4. Ремот для бота(удаленное включение)
+
+
