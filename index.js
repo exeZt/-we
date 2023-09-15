@@ -21,7 +21,7 @@ client.on("message",  async (message) => {
             .then(() => storage.createOrdersFile(finalData))
         client.onReplyToMessage(chatId, message.message_id, function () {
             console.log("approved");
-        })
+        });
     }
 });
 
