@@ -126,21 +126,28 @@ client.on('message', async function (msg) {
         if (msg.from.username === u){
             console.log(true)
             let res = DataHandler.queryCompare(msg.text)
+            res = JSON.stringify(res)
+            console.log(JSON.stringify(res) + ' ' + safeJsonParse(res))
             if (isJson(res) === true)
-                client.sendMessage(msg.chat.id, 'res', res)
+                client.sendMessage(msg.chat.id, msg.text , res)
+                    .then(console.log(isJson(res)))
             else
                 client.sendMessage(msg.chat.id, res)
+                    .then(console.log(isJson(res)))
         }
     })
 })
 
 function isJson(str) {
+
+}
+
+function safeJsonParse(str) {
     try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
+        return [null, JSON.parse(str)];
+    } catch (err) {
+        return [err];
     }
-    return true;
 }
 // client.on("message", async function (msg) {
 //     let data = fs.readFileSync(`${__dirname}/udata.json`);

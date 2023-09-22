@@ -234,19 +234,21 @@
     }
 
     function getResponseList(e) {
-        let a = fs.readFileSync(`${__dirname}/storage/renderComponent/lists/${e}-prod.json`).toString()
+        let a = fs.readFileSync(`${__dirname}/storage/renderComponent/lists/${e}.json`).toString() //-prod
         a = JSON.parse(a)
-        return createKeyBoard(a);
+        return createKeyBoard({a});
     }
 
     function createKeyBoard(data) { //object
         let i = [null]
+        console.log(data)
+        let a = data;
         return {
             parse_mode: "Markdown",
             resize_keyboard: true,
             reply_markup: {
-                keyboard: data.filter(item => !i.includes(item)).map(val => [{
-                    text: val
+                keyboard: a["a"].map(val => [{
+                    text: val[0]
                 }])
             }
         }
