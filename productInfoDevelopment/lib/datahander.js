@@ -1,266 +1,276 @@
+/** @namespace: DataHandlerModule
+ *  @version 2.0.0.0
+ *  @desc module to manipulate <fs data>, API Google Sheets
+**/
 (function (){
     "use strict"
-
-    const fs = require("fs");
+    //6616653341:AAH3vtr4nyezk96xJ8iZIIeVJprgeVT6Y8A // new bot key
+    const fs = require("fs"),
+    {
+        NetworkDataId ,
+        PathData
+    } = require("./config");
     global.XMLHttpRequest = require('xhr2');
-    const { callbackPromise } = require("nodemailer/lib/shared");
 
     module.exports = this.DataHandler = new class {
-        createDataList = function () {
-            let path_of_list = `${__dirname}/storage/dataList1.json`;
-            if (!fs.existsSync(`${__dirname}/storage`)) {
-                fs.mkdir(`${__dirname}/storage`, { recursive: true }, function (err) {
-                    if (err) 
-                        throw err
-                })
-                fs.writeFile(`${__dirname}/storage/dataList1.json`, '~', function (err) {
-                     if (err)
-                         throw err
-                });
-            }
-            getRenderList()
+        getRenderLog = function (uname, uid, msg_id, msg_date) {
+            console.trace(`getRenderLog() called by: <${uname}> with id: <${uid}>; message id: <${msg_id}> at date: ${msg_date}`)
+            return `${__dirname}/storage/renderComponent/renderFinal.json`
         }
-        queryCompare = function (query) {
-            let responseVars = JSON.parse(fs.readFileSync(`${__dirname}/storage/renderComponent/renderFinal.json`).toString())["listsResponseData"];
-            let tres;
-            let queryK = query.replace(/^a-zA-Z0-9 ]/g, '').trim()
-            // console.log(responseVars)
-            console.log(queryK)
-            responseVars.forEach(el => {
-                console.log(`${Object.keys(el)[0]} || ${queryK}`)
-                let a = Object.keys(el)[0];
-                if (a === queryK){
-                    console.log(true)
-                    console.log(el[Object.keys(el)[0]])
-                    if (el[Object.keys(el)[0]].startsWith('<') & el[Object.keys(el)[0]].endsWith('>'))
-                    {
-                        tres = getResponseList(el[Object.keys(el)[0]].replace('<', '').replace('>', ''));
-                    }
-                    else {
-                        tres = el[Object.keys(el)[0]]
-                    }
-                }
-            })
-            console.log(tres)
-            return tres;
+
+        responseRenderer = async function (msg, callback) {
+            console.log(`${msg === '/start'} --save`)
+            if (msg === '/start' || msg === 'Назад')
+                await callback(getMainMenuKeyboard(async function (d) {
+                    console.trace('Message received msg === /start || Назад')
+                    console.trace( `MessageResponse Type: Keyboard ${JSON.stringify(d)}`)
+                await callback(await d)
+            }));
+            else
+                await callback(getResponseData(msg, async function (a) {
+                    console.trace(a)
+                await callback(await a)
+            }));
         }
     }
-    /**
-    * @param func: Функции исп. для модуля
-    * */
 
-    function getRenderList() {
-        let sName = 'renderList';
-        let sID = '1nWtLE1BFxchRV0edH3xJ0U1UxL67NKFP9U11wH1h2F0';
+    /** @function: getMainMenuKeyboard(callback),
+     *  @description gets main menu keyboard via GoogleSheet <MainMenuList>
+     *  @param callback: returns Keyboard object
+     **/
+
+    function getMainMenuKeyboard(callback) {
+        getRenderListFromNetwork();
+        let sName = `MainMenuList`;
+        let sID = NetworkDataId.table_v2;
         let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
-        let qRaw = 'Select A';
+        let qRaw = 'Select *';
         let qRea = encodeURIComponent(qRaw);
         let qUri = `${base}&sheet=${sName}&tq=${qRea}`;
         let dataFinal = []
-        fetch(qUri)
-            .then(r => r.text())
-            .then(rd => {
-                let data = JSON.parse(rd.substr(47).slice(0, -2))
-                for (let i = 1; i < data.table.rows.length; i++){
-                    dataFinal.push(data.table.rows[i].c[0].v);
-                    console.log(data.table.rows[i].c[0].v)
+        let keyboard_data = []
+        let xhr = new XMLHttpRequest();
+        xhr.open('get', qUri, true);
+        xhr.send()
+        xhr.onload = () => {
+            let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
+            for (let i = 1; i < data.table.rows.length; i++){
+                dataFinal.push([{
+                     [data.table.rows[i].c[0].v] : data.table.rows[i].c[1].v
+                }]);
+                keyboard_data.push(
+                    data.table.rows[i].c[0].v
+                )
+            }
+            let keyboard_r = {
+                parse_mode: "Markdown",
+                resize_keyboard: true,
+                reply_markup: {
+                    keyboard: keyboard_data.map(v => [{
+                        text: v
+                    }])
                 }
-                console.log(dataFinal)
-                fs.writeFile(`${__dirname}/storage/renderComponent/render.json`, JSON.stringify(dataFinal), function (err) {
-                    if (err)
-                        console.log(err)
-                });
-            })
-        let renderList = fs.readFileSync(`${__dirname}/storage/renderComponent/render.json`).toString()
-        let renderFinalData = {
-            "lists" : JSON.parse(renderList).map(list => [{ list_name : list }])
-        };
-        let renderCompList = [];
+            }
+            console.log(dataFinal)
+            console.log(keyboard_r)
+            callback(keyboard_r);
+        }
+    }
 
-        renderFinalData["lists"][0].forEach(element => renderCompList.push(element))
-        // console.log(renderCompList)/** READY */
-        console.log(renderFinalData["lists"][0][0]["list_name"]) /** correct : renderFinalData["lists"][0][0]["list_name"] */
-        let XZ = 0;
-        let a = JSON.parse(renderList)
-        a.forEach(el => {
-            console.log(XZ++)
-            let sID = '1nWtLE1BFxchRV0edH3xJ0U1UxL67NKFP9U11wH1h2F0';
-            console.log(el)
-            let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
-            let qRaw = 'Select A';
-            let qRea = encodeURIComponent(qRaw);
-            let sName = el;
-            let qUri = `${base}&sheet=${sName}&tq=${qRea}`;
-            let dataFinal = [];
-            fetch(qUri)
-                .then(r => {
-                    console.log(`${r.status} :: ${qUri}`)
-                    if (r.status !== 200)
-                        return "err"
-                    else
-                        return r.text()
-                })
-                .then(rd => {
-                    if (rd.toString() === 'err'){
-                        console.log("error occured")
-                    }
-                    else {
-                        console.log("EWOW")
-                        let data;
-                        try{
-                            data = JSON.parse(rd.substr(47).slice(0, -2))
-                        } catch (e) {
-                            console.log(e);
-                        }
-                        for (let i = 1; i < data.table.rows.length; i++){
-                            dataFinal.push(data.table.rows[i].c[0].v);
-                            console.log(data.table.rows[i].c[0].v)
-                        }
-                        console.log(dataFinal)
-                        fs.mkdir(`${__dirname}/storage/renderComponent/lists/`,
-                            { recursive: true } ,function (err) {
-                            if (err)
-                                console.log(err)
-                        })
-                        fs.writeFile(`${__dirname}/storage/renderComponent/lists/${el}.json`, JSON.stringify(dataFinal), function (err) {
-                            if (err)
-                                console.log(err)
-                        });
-                    }
-                })
+    function getRenderListFromNetwork() {
+        let sName = `renderList`;
+        let sID = NetworkDataId.table_v2;
+        let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
+        let qRaw = 'Select *';
+        let qRea = encodeURIComponent(qRaw);
+        let qUri = `${base}&sheet=${sName}&tq=${qRea}`;
+        let dataFinal = []
+        let xhr = new XMLHttpRequest();
+        xhr.open('get', qUri, true);
+        xhr.send()
+        xhr.onload = () => {
+            let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
+            for (let i = 1; i < data.table.rows.length; i++){
+                dataFinal.push(data.table.rows[i].c[0].v)
+            }
+            createList2(dataFinal, async function (d) {
+                setTimeout(async () => storeData(await d, 'localResponseData_type_list', 'response', function (err) {
+                    console.log(err)
+                }), 1000)
+            }).then(r => console.log(r))
+        }
+    }
+
+    /**
+     * @function: createList2(data, callback),
+     * @description creating main request/response object
+     * @param data: Array, raw data
+     * @param callback: callback result like JSON object
+     **/
+
+    async function createList2(data, callback) {
+        let data_fcol = []
+        let data_fcol2 = []
+        let list_data_comp = []
+        data.forEach(e => {
+            callData(e, function (d) {
+                list_data_comp.push(d)
+            })
         })
-        /**
-         * @param renderingResponse: Рендер ответных сообщений+ клава
-         * */
-        a.forEach(el => {
-            console.log(XZ++)
-            let sID = '1nWtLE1BFxchRV0edH3xJ0U1UxL67NKFP9U11wH1h2F0';
-            console.log(el)
-            let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
-            let qRaw = 'Select B';
-            let qRea = encodeURIComponent(qRaw);
+
+        function callData(el, callback) {
             let sName = el;
+            let sID = NetworkDataId.table_v2;
+            let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
+            let qRaw = 'Select *';
+            let qRea = encodeURIComponent(qRaw);
             let qUri = `${base}&sheet=${sName}&tq=${qRea}`;
-            let dataFinal = [];
-            fetch(qUri)
-                .then(r => {
-                    console.log(`${r.status} :: ${qUri}`)
-                    if (r.status !== 200)
-                        return "err"
-                    else
-                        return r.text()
-                })
-                .then(rd => {
-                    if (rd.toString() === 'err'){
-                        console.log("error occured")
+            let dataFinal = []
+            let xhr = new XMLHttpRequest();
+            xhr.open('get', qUri, true);
+            xhr.send()
+            xhr.onload = () => {
+                let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
+                for (let i = 1; i < data.table.rows.length; i++) {
+                    data_fcol.push(data.table.rows[i].c[0].v)
+                    data_fcol2.push(data.table.rows[i].c[1].v)
+                }
+                let finalListData = [{
+                    [el]: {
+                        "title": data_fcol.map(v => v),
+                        "content": data_fcol2.map(v => v)
                     }
-                    else {
-                        console.log("EWOW")
-                        let data;
-                        try{
-                            data = JSON.parse(rd.substr(47).slice(0, -2))
-                        } catch (e) {
-                            console.log(e);
-                        }
-                        for (let i = 1; i < data.table.rows.length; i++){
-                            dataFinal.push(data.table.rows[i].c[0].v);
-                            console.log(data.table.rows[i].c[0].v)
-                        }
-                        console.log(dataFinal)
-                        fs.mkdir(`${__dirname}/storage/renderComponent/lists/`,
-                            { recursive: true } ,function (err) {
-                                if (err)
-                                    console.log(err)
-                            })
-                        fs.writeFile(`${__dirname}/storage/renderComponent/lists/${el}-prod.json`, JSON.stringify(dataFinal), function (err) {
-                            if (err)
-                                console.log(err)
-                        });
-                    }
-                })
-        })
-        //t
-        let renderList_ = fs.readFileSync(`${__dirname}/storage/renderComponent/render.json`).toString()
-        let toRendFile = [];
-        JSON.parse(renderList_).forEach(element => {
-            let list_data = fs.readFileSync(`${__dirname}/storage/renderComponent/lists/${element}.json`)
-            toRendFile.push(
-                [{
-                    [element] : list_data.toString()
                 }]
-            )
-        })
-        //final render of objects
-        let files = fs.readdirSync(`${__dirname}/storage/renderComponent/lists`)
-        let files_f = []
-        let files_f2 = []
-        files.forEach(file => {
-            let fileName = file.replace(`.json`, '').replace(`-prod`, '')
-            let data = JSON.parse(fs.readFileSync(`${__dirname}/storage/renderComponent/lists/${fileName}.json`).toString())
-            let data2 = JSON.parse(fs.readFileSync(`${__dirname}/storage/renderComponent/lists/${fileName}-prod.json`).toString())
-            console.log(data + " fdfsf " + data2)
-            data.forEach(el => {
-                files_f.push(el)
-            })
-            data2.forEach(el => {
-                files_f2.push(el);
-            })
-        })
-        let files_final = [];
-        for (let i = 0; i <= files_f.length; i++){
-            files_final.push({
-                [files_f[i]]: files_f2[i]
-            })
-        }
-        let fData = {
-            "listsList" : JSON.parse(renderList_),
-            "listsData" : {
-                "data" : toRendFile
-            },
-            "listsResponseData" : files_final
-        }
-        console.log(fData[0])
-        fs.writeFile(`${__dirname}/storage/renderComponent/renderFinal.json`, JSON.stringify(fData) , {
-
-        } ,function (err) {
-            if (err)
-                console.log(err)
-        })
-        console.log(files_final)
-    }
-
-    function queryCompare(query) {
-
-    }
-
-    function getResponseList(e) {
-        let a = fs.readFileSync(`${__dirname}/storage/renderComponent/lists/${e}.json`).toString() //-prod
-        a = JSON.parse(a)
-        return createKeyBoard({a});
-    }
-
-    function createKeyBoard(data) { //object
-        let i = [null]
-        console.log(data)
-        let a = data;
-        return {
-            parse_mode: "Markdown",
-            resize_keyboard: true,
-            reply_markup: {
-                keyboard: a["a"].map(val => [{
-                    text: val[0]
-                }])
+                callback(finalListData)
+                data_fcol = []
+                data_fcol2 = []
             }
         }
+
+        console.log(list_data_comp)
+        callback(list_data_comp)
     }
 
-    function getSheetsData() {
+    /**
+     * @function: storeData(data, data_nameFile, data_nameJson, callback),
+     * @description saving data to render file
+     * @param data: Object, data to storage
+     * @param data_nameFile: String, name of file
+     * @param data_nameJson: String, name of json object
+     * @param callback: error callback if it exists
+     **/
 
+    function storeData(data, data_nameFile, data_nameJson, callback) {
+        let data_fin = {
+            [data_nameJson] : data
+        }
+        if (!fs.existsSync(PathData.path_to_local)) {
+            fs.mkdir(PathData.path_to_local, {
+                recursive: true
+            },function (err, path) {
+                if (err)
+                    console.log(err)
+                else
+                    console.trace(`local_data dir created at: ${path}`)
+            })
+        }
+        try{
+            fs.writeFile(`${PathData.path_to_local}/${data_nameFile}.json`,
+                JSON.stringify(data_fin),{
+
+                },
+                function (err) {
+                    if (err)
+                        console.log(err)
+                })
+        }
+        catch (e) {
+            callback(e)
+        }
     }
 
+    /**
+     * @function: getResponseData(message, callback),
+     * @description found response to request message,
+     * @param message: Strin, request message,
+     * @param callback: keyboard || string callback
+    **/
+
+    async function getResponseData(message, callback) {
+        let data_nameFile = 'localResponseData_type_list';
+        let raw_data = fs.readFileSync(`${PathData.path_to_local}/${data_nameFile}.json`)
+        let parsed_data = JSON.parse(raw_data.toString());
+        console.log(parsed_data);
+        let i = 0;
+        let r;
+        await parsed_data["response"].forEach(obj => {
+            console.log('data_line:' + i + ' ' + '[ ' + obj[0][Object.keys(obj[0])[0]].title + ' | ' + obj[0][Object.keys(obj[0])[0]].content + ' ]');
+            obj[0][Object.keys(obj[0])[0]].title.forEach(el => {
+                if (el === message) {
+                    r = obj[0][Object.keys(obj[0])[0]].content[obj[0][Object.keys(obj[0])[0]].title.indexOf(el)]
+                }
+            });
+            i++
+        })
+        await createKeyBoard(parsed_data["response"], r, async function (data) {
+            console.trace(data)
+            callback(await data)
+        })
+    }
+
+    /**
+     *
+     * @function createKeyBoard(data, r, callback)
+     *
+     * @description creating keyboard using data returns Telegram parsed Keyboard
+     * @param data: Json object array
+     * @param r: r: result of getting response type data (<LIST_NAME> || response)
+     * @param callback: keyboard callback
+     **/
+
+    async function createKeyBoard(data, r, callback) {
+        let c;
+        try {
+            c = r.toString().replace('<', '').replace('>', '')
+        } catch (e) {
+            console.log(e)
+        }
+        let kb;
+        console.log(c + ' --s')
+        let i = 0;
+        let keyboard_ready;
+        console.log(data)
+        console.log(`--c ${c}`)
+        for (const obj of data) {
+            console.log(`${Object.keys(obj[0]).toString().replace(/^a-zA-Z0-9 ]/g, '').trim()
+            === c} --branch compared: ${Object.keys(obj[0])} : ${c}`)
+            if (Object.keys(obj[0]).toString().replace(/^a-zA-Z0-9 ]/g, '').trim()
+                === c) {
+                console.log(Object.keys(obj[0]) + ' --var')
+                kb = obj[0][c]["title"]
+                console.log(kb + ' --kb_data')
+                kb.push('Назад')
+                keyboard_ready = {
+                    parse_mode: "Markdown",
+                    resize_keyboard: true,
+                    reply_markup: {
+                        keyboard: kb.map(val => [{
+                            text: val.toString()
+                        }])
+                    }
+                }
+                console.log("-------------------------")
+                console.log(kb)
+                console.log(keyboard_ready)
+                console.log("-------------------------")
+                break;
+            }
+            i++;
+        }
+        console.trace(`${i} : ${data}`)
+        if (i === data.length){
+            callback(await r)
+        }else callback(keyboard_ready)
+    }
 }.call(this))
-/**
- *
- * @event get_all_data: Получение полного списка данных из отдельных ф-й
- *
- * */    
+// https://airsoft-rus.ru/catalog/1030/466965/
