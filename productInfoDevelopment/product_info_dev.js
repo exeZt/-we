@@ -31,8 +31,7 @@ client.on('message', async function (msg) {
                 console.trace(isKeyBoard(await d))
                 if (isKeyBoard(await d)){
                     console.log(d)
-                    client.sendMessage(msg.chat.id, 'keyboard' , await d)
-                        .then((v) => client.deleteMessage(v.chat.id, v.message_id.text))
+                    client.sendMessage(msg.chat.id, msg.text , await d)
                         .then(() => client.deleteMessage(msg.chat.id, msg.message_id))
                         .then(() => client.deleteMessage(msg.from.id, msg.message_id))
                         .then(() => console.trace(`message ${msg.message_id} gotten keyboard response`))

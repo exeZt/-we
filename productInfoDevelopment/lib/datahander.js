@@ -54,7 +54,7 @@
         xhr.send()
         xhr.onload = () => {
             let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
-            for (let i = 1; i < data.table.rows.length; i++){
+            for (let i = 0; i < data.table.rows.length; i++){
                 dataFinal.push([{
                      [data.table.rows[i].c[0].v] : data.table.rows[i].c[1].v
                 }]);
@@ -90,7 +90,7 @@
         xhr.send()
         xhr.onload = () => {
             let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
-            for (let i = 1; i < data.table.rows.length; i++){
+            for (let i = 0; i < data.table.rows.length; i++){
                 dataFinal.push(data.table.rows[i].c[0].v)
             }
             createList2(dataFinal, async function (d) {
@@ -131,9 +131,15 @@
             xhr.send()
             xhr.onload = () => {
                 let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
-                for (let i = 1; i < data.table.rows.length; i++) {
-                    data_fcol.push(data.table.rows[i].c[0].v)
-                    data_fcol2.push(data.table.rows[i].c[1].v)
+                for (let i = 0; i < data.table.rows.length; i++) {
+                    if (data.table.rows[i].c[0].v !== 'title'){
+                        data_fcol.push(data.table.rows[i].c[0].v)
+                        try {
+                            data_fcol2.push(data.table.rows[i].c[1].v)
+                        }catch (e) {
+                            console.trace(qUri)
+                        }
+                    }
                 }
                 let finalListData = [{
                     [el]: {
@@ -267,10 +273,10 @@
             }
             i++;
         }
-        console.trace(`${i} : ${data}`)
+        console.trace(`${i} : ${data.length}`)
         if (i === data.length){
             callback(await r)
-        }else callback(keyboard_ready)
+        }else callback(await keyboard_ready)
     }
 }.call(this))
 // https://airsoft-rus.ru/catalog/1030/466965/
