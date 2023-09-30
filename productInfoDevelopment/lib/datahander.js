@@ -15,22 +15,24 @@
     module.exports = this.DataHandler = new class {
         getRenderLog = function (uname, uid, msg_id, msg_date) {
             console.trace(`getRenderLog() called by: <${uname}> with id: <${uid}>; message id: <${msg_id}> at date: ${msg_date}`)
-            return `${__dirname}/storage/renderComponent/renderFinal.json`
+            return `${PathData.path_to_local}localResponseData_type_list.json`
         }
 
         responseRenderer = async function (msg, callback) {
-            console.log(`${msg === '/start'} --save`)
             if (msg === '/start' || msg === 'Назад')
                 await callback(getMainMenuKeyboard(async function (d) {
-                    console.trace('Message received msg === /start || Назад')
-                    console.trace( `MessageResponse Type: Keyboard ${JSON.stringify(d)}`)
                 await callback(await d)
             }));
             else
                 await callback(getResponseData(msg, async function (a) {
-                    console.trace(a)
                 await callback(await a)
             }));
+
+        }
+        callFileFromRenderer = async function (msg, callback) {
+            await getResponseFile(msg, function (a) {
+                callback(a);
+            })
         }
     }
 
@@ -42,7 +44,7 @@
     function getMainMenuKeyboard(callback) {
         getRenderListFromNetwork();
         let sName = `MainMenuList`;
-        let sID = NetworkDataId.table_v2;
+        let sID = NetworkDataId.table_data;
         let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
         let qRaw = 'Select *';
         let qRea = encodeURIComponent(qRaw);
@@ -71,15 +73,13 @@
                     }])
                 }
             }
-            console.log(dataFinal)
-            console.log(keyboard_r)
             callback(keyboard_r);
         }
     }
 
     function getRenderListFromNetwork() {
         let sName = `renderList`;
-        let sID = NetworkDataId.table_v2;
+        let sID = NetworkDataId.table_data;
         let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
         let qRaw = 'Select *';
         let qRea = encodeURIComponent(qRaw);
@@ -97,7 +97,7 @@
                 setTimeout(async () => storeData(await d, 'localResponseData_type_list', 'response', function (err) {
                     console.log(err)
                 }), 1000)
-            }).then(r => console.log(r))
+            })
         }
     }
 
@@ -111,6 +111,7 @@
     async function createList2(data, callback) {
         let data_fcol = []
         let data_fcol2 = []
+        let data_fcol3 = []
         let list_data_comp = []
         data.forEach(e => {
             callData(e, function (d) {
@@ -120,7 +121,7 @@
 
         function callData(el, callback) {
             let sName = el;
-            let sID = NetworkDataId.table_v2;
+            let sID = NetworkDataId.table_data;
             let base = `https://docs.google.com/spreadsheets/d/${sID}/gviz/tq?`;
             let qRaw = 'Select *';
             let qRea = encodeURIComponent(qRaw);
@@ -136,7 +137,9 @@
                         data_fcol.push(data.table.rows[i].c[0].v)
                         try {
                             data_fcol2.push(data.table.rows[i].c[1].v)
-                        }catch (e) {
+                            if (data.table.rows[i].c[2].v !== 'true' || data.table.rows[i].c[2].v !== 'false' || data.table.rows[i].c[2].v !== 'null')
+                                data_fcol3.push(data.table.rows[i].c[2].v)
+                        } catch (e) {
                             console.trace(qUri)
                         }
                     }
@@ -144,16 +147,16 @@
                 let finalListData = [{
                     [el]: {
                         "title": data_fcol.map(v => v),
-                        "content": data_fcol2.map(v => v)
+                        "content": data_fcol2.map(v => v),
+                        "file" : data_fcol3.map(v => v)
                     }
                 }]
                 callback(finalListData)
                 data_fcol = []
                 data_fcol2 = []
+                data_fcol3 = []
             }
         }
-
-        console.log(list_data_comp)
         callback(list_data_comp)
     }
 
@@ -206,11 +209,9 @@
         let data_nameFile = 'localResponseData_type_list';
         let raw_data = fs.readFileSync(`${PathData.path_to_local}/${data_nameFile}.json`)
         let parsed_data = JSON.parse(raw_data.toString());
-        console.log(parsed_data);
         let i = 0;
         let r;
         await parsed_data["response"].forEach(obj => {
-            console.log('data_line:' + i + ' ' + '[ ' + obj[0][Object.keys(obj[0])[0]].title + ' | ' + obj[0][Object.keys(obj[0])[0]].content + ' ]');
             obj[0][Object.keys(obj[0])[0]].title.forEach(el => {
                 if (el === message) {
                     r = obj[0][Object.keys(obj[0])[0]].content[obj[0][Object.keys(obj[0])[0]].title.indexOf(el)]
@@ -219,7 +220,6 @@
             i++
         })
         await createKeyBoard(parsed_data["response"], r, async function (data) {
-            console.trace(data)
             callback(await data)
         })
     }
@@ -242,19 +242,12 @@
             console.log(e)
         }
         let kb;
-        console.log(c + ' --s')
         let i = 0;
         let keyboard_ready;
-        console.log(data)
-        console.log(`--c ${c}`)
         for (const obj of data) {
-            console.log(`${Object.keys(obj[0]).toString().replace(/^a-zA-Z0-9 ]/g, '').trim()
-            === c} --branch compared: ${Object.keys(obj[0])} : ${c}`)
             if (Object.keys(obj[0]).toString().replace(/^a-zA-Z0-9 ]/g, '').trim()
                 === c) {
-                console.log(Object.keys(obj[0]) + ' --var')
                 kb = obj[0][c]["title"]
-                console.log(kb + ' --kb_data')
                 kb.push('Назад')
                 keyboard_ready = {
                     parse_mode: "Markdown",
@@ -265,10 +258,6 @@
                         }])
                     }
                 }
-                console.log("-------------------------")
-                console.log(kb)
-                console.log(keyboard_ready)
-                console.log("-------------------------")
                 break;
             }
             i++;
@@ -276,7 +265,29 @@
         console.trace(`${i} : ${data.length}`)
         if (i === data.length){
             callback(await r)
-        }else callback(await keyboard_ready)
+        }else callback(keyboard_ready) //await
+    }
+
+    async function getResponseFile(message, callback) {
+        let data_nameFile = 'localResponseData_type_list';
+        let raw_data = fs.readFileSync(`${PathData.path_to_local}/${data_nameFile}.json`)
+        let parsed_data = JSON.parse(raw_data.toString());
+        let i = 0;
+        let r;
+        await parsed_data["response"].forEach(obj => {
+            obj[0][Object.keys(obj[0])[0]].title.forEach(el => {
+                if (el === message) {
+                    r = obj[0][Object.keys(obj[0])[0]].file[obj[0][Object.keys(obj[0])[0]].title.indexOf(el)] /**   */
+                }
+            });
+            i++
+        })
+        console.trace(r)
+        callback(`${PathData.path_to_files}${r}`);
     }
 }.call(this))
 // https://airsoft-rus.ru/catalog/1030/466965/
+
+/*
+
+*/
