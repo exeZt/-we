@@ -36,6 +36,9 @@
                 console.log(e)
             }
         }
+        _refresh_data = function () {
+            DataHandler.refreshData();
+        }
         _getmemberslist = function () {
             try {
                 let a = fs.readFileSync(AuthLists.path_to_members)
