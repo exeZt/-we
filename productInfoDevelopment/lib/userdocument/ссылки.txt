@@ -1,0 +1,12 @@
+alfa_datasetv2_data: https://docs.google.com/spreadsheets/d/1hVpfy4j9G35SGKNaSq8iO9PVz63DSAJlPUfOY7y8UxM/edit#gid=0
+	"Книга" с данными, кнопки ответы это все здесь лежит 
+
+alfa_datasetv2_auth: https://docs.google.com/spreadsheets/d/1XUd9d4_YWI5SjY2z40TtAlUgDRe9KbAkHKCuPMwgUzI/edit#gid=0
+	"Книга" с доступами, пользователи, админы, забаненные лежат здесь
+
+github: https://github.com/exeZt/card_order/tree/master/productInfoDevelopment
+	Весь код бота лежит здесь
+
+ссылка на бота: https://t.me/piadev_bot 
+
+автор бота: дружный коллектив
