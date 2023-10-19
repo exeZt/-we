@@ -60,7 +60,7 @@
         xhr.send()
         xhr.onload = () => {
             let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
-            for (let i = 0; i < data.table.rows.length; i++){
+            for (let i = 1; i < data.table.rows.length; i++){
                 dataFinal.push([{
                      [data.table.rows[i].c[0].v] : data.table.rows[i].c[1].v
                 }]);
