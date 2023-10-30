@@ -47,7 +47,6 @@
                     'path' : AuthLists.path_to_members
                 };
             } catch (e) {
-                console.log(e)
             }
         }
         _getbanlist = function () {
@@ -58,8 +57,11 @@
                     'path' : AuthLists.path_to_banned
                 };
             } catch (e) {
-                console.log(e)
             }
+        }
+        _getLogFile = function () {
+            let date = new Date();
+            let a = fs.readFileSync(`${PathData.path_to_logs}/${date.getDay()}-${date.getMonth()+1}-${date.getFullYear()}.txt`);
         }
     }
 }.call(this))

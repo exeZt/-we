@@ -68,7 +68,6 @@
                     data.table.rows[i].c[0].v
                 )
             }
-            console.log(keyboard_data)
             let keyboard_r;
             if (keyboard_data.length > 8){
                 const midIndex = Math.floor(keyboard_data.length / 2);
@@ -79,7 +78,6 @@
                     keyboard_elements.push([
                         { text: firstPart[i] }, { text: secondPart[i] }
                     ])
-                    console.log(keyboard_elements[i])
                 }
                 if (keyboard_data.length % 2 !== 0) {
                     let lastElement = keyboard_data.slice(-1);
@@ -127,7 +125,6 @@
             }
             createList2(dataFinal, async function (d) {
                 setTimeout(async () => storeData(await d, 'localResponseData_type_list', 'response', function (err) {
-                    console.log(err)
                 }), 1000)
             })
         }
@@ -152,22 +149,18 @@
             let qRaw = 'Select *';
             let qRea = encodeURIComponent(qRaw);
             let qUri = `${base}&sheet=${sName}&tq=${qRea}`.toString();
-            console.log(qRaw)
             let dataFinal = []
             let xhr = new XMLHttpRequest();
             xhr.open('get',qUri , true);
             xhr.send()
             xhr.onload = async () => {
                 await xhr;
-                console.log(qUri)
                 let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
-                console.log(data)
                 for (let i = 0; i < data.table.rows.length; i++) {
                     if (data.table.rows[i].c[0] !== null??undefined) {
                         if (data.table.rows[i].c[0].v !== 'title') {
                             data_fcol.push(data.table.rows[i].c[0].v)
                             data_fcol2.push(data.table.rows[i].c[1].v)
-                            console.log(data.table.rows[i].c[2])
                             if (data.table.rows[i].c[2] === undefined || data.table.rows[i].c[2] === null)
                                 data_fcol3.push('null');
                             else
@@ -218,8 +211,6 @@
 
                 },
                 function (err) {
-                    if (err)
-                        console.log(err)
                 })
         }
         catch (e) {
@@ -251,7 +242,6 @@
         try {
             c = r.toString().replace('<', '').replace('>', '')
         } catch (e) {
-            console.log(e)
         }
         let kb;
         let i = 0;
@@ -271,7 +261,6 @@
                         keyboard_elements.push([
                             { text: firstPart[i] }, { text: secondPart[i] }
                         ])
-                        console.log(keyboard_elements[i])
                     }
                     if (keyboard_data.length % 2 !== 0) {
                         let lastElement = keyboard_data.slice(-1);
@@ -321,7 +310,6 @@
             });
             i++
         })
-        //console.trace(r)
         callback(`${PathData.path_to_files}${r}`);
     }
 
@@ -335,25 +323,23 @@
             obj[0][Object.keys(obj[0])].title.forEach(el => {
                 if (el === message) {
                     r = obj[0][Object.keys(obj[0])[0]].media[obj[0][Object.keys(obj[0])[0]].title.indexOf(el)] /**   */
-                    console.trace(r)
                 }
             });
             i++
         })
-        console.trace(r)
         callback(r.trim());
     }
 
     async function createLog(uinfo, uname, uquery, uresponse){
         let date = new Date();
-        let fileName = `${date.getFullYear()}-${date.getMonth()}-${date.getDay()}.txt`;
+        let fileName = `${date.getDate()}-${date.getMonth()+1}-${date.getFullYear()}.txt`;
         let log = {
-            дата: `${date.getFullYear()}.${date.getMonth()}.${date.getDay()} time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
+            дата: `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()} time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
             пользователь: uinfo,
-            имя_пользователя: uinfo,
+            имя_пользователя: uname,
             запрос_к_боту: uquery,
             ответил_бот: uresponse
         }
-        fs.appendFile(`${PathData.path_to_logs}/${fileName}`, `\n${log}`, function () {})
+        fs.appendFile(`${PathData.path_to_logs}/${fileName}`, `\n${JSON.stringify(log)}`, function () {})
     }
 }.call(this))

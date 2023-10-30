@@ -15,13 +15,13 @@
         }
         isBanned = function (uname, callback) {
             _isBanned(uname, function (e) {
-                console.log(e + ' --save')
+                console.log(e + ' --banned')
                 callback(e)
             })
         }
         isAdmin = function (uname, callback) {
             _isAdmin(uname, function (e) {
-                console.log(e + ' --save')
+                console.log(e + ' --admin')
                 callback(e)
             })
         }
@@ -42,27 +42,19 @@
             try {
                 let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
                 for (let i = 1; i < data.table.rows.length; i++) {
-                    console.log(i)
                     try {
                         dataFinal.push([{
                             username: data.table.rows[i].c[0].v,
-                            uservks: data.table.rows[i].c[1]. v,
+                            uservks: data.table.rows[i].c[1].v,
                             usertg: data.table.rows[i].c[2].v
                         }])
-                    } catch (e) {
-                        console.log(e)
-                    }
+                    } catch (e) {}
                 }
-                console.log(dataFinal)
                 if (!fs.existsSync(`${PathData.path_to_auth}`)) {
                     fs.mkdir(`${PathData.path_to_auth}`, {recursive: true}, function (e) {
-                        if (e)
-                            console.log(e)
                     })
                 }
                 fs.writeFile(`${PathData.path_to_auth}banned_users_data.json`, JSON.stringify(dataFinal), function (err) {
-                    if (err)
-                        console.log(err)
                 });
                 let bool;
                 dataFinal.forEach(el => {
@@ -74,8 +66,6 @@
                 else
                     callback(false)
             } catch (e) {
-                console.trace(`error caught at: ${e}`)
-
             }
         }
     }
@@ -95,7 +85,6 @@
             try{
                 let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
                 for (let i = 1; i < data.table.rows.length; i++){
-                    console.log(i)
                     try {
                         dataFinal.push([{
                             username: data.table.rows[i].c[0].v,
@@ -104,19 +93,13 @@
                         }])
                     }
                     catch (e) {
-                        console.log(e)
                     }
                 }
-                console.log(dataFinal)
                 if (!fs.existsSync(`${PathData.path_to_auth}`)){
                     fs.mkdir(`${PathData.path_to_auth}`, { recursive: true } , function (e) {
-                        if (e)
-                            console.log(e)
                     })
                 }
                 fs.writeFile(`${PathData.path_to_auth}admins_users_data.json`, JSON.stringify(dataFinal), function (err) {
-                    if (err)
-                        console.log(err)
                 });
                 let bool;
                 dataFinal.forEach(el => {
@@ -128,7 +111,6 @@
                 else
                     callback(false)
             } catch (e) {
-                console.trace(`error caught at: ${e}`)
             }
         }
     }
@@ -148,7 +130,6 @@
             try {
                 let data = JSON.parse(xhr.responseText.substr(47).slice(0, -2))
                 for (let i = 1; i < data.table.rows.length; i++){
-                    console.log(i)
                     try {
                         dataFinal.push([{
                             username: data.table.rows[i].c[0].v,
@@ -157,22 +138,15 @@
                         }])
                     }
                     catch (e) {
-                        console.log(e)
                     }
                 }
-                console.log(dataFinal)
                 if (!fs.existsSync(`${PathData.path_to_auth}`)){
                     fs.mkdir(`${PathData.path_to_auth}`, { recursive: true} , function (e) {
-                        if (e)
-                            console.log(e)
                     })
                 }
                 fs.writeFile(`${PathData.path_to_auth}users_data.json`, JSON.stringify(dataFinal), function (err) {
-                    if (err)
-                        console.log(err)
                 });
             }catch (e) {
-                console.trace(`error caught at: ${e}`)
             }
         }
     }
@@ -194,16 +168,11 @@
             for (let i = 1; i < data.table.rows.length; i++){
                 dataFinal.push(data.table.rows[i].c[0].v)
             }
-            console.log(dataFinal)
             if (!fs.existsSync(`${PathData.path_to_auth}`)){
                 fs.mkdir(`${PathData.path_to_auth}`, { recursive: true} , function (e) {
-                    if (e)
-                        console.log(e)
                 })
             }
             fs.writeFile(`${PathData.path_to_auth}users_data_s.json`, JSON.stringify(dataFinal), function (err) {
-                if (err)
-                    console.log(err)
             });
         }
         return fs.readFileSync(`${PathData.path_to_auth}users_data_s.json`).toString()
