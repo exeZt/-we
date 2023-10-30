@@ -25,6 +25,10 @@
                 }));
         }
 
+        logger = async function(uinfo, uname, uquery, uresponse){
+            await createLog(uinfo, uname, uquery, uresponse)
+        }
+
         refreshData = async function (){
             getRenderListFromNetwork();
         }
@@ -338,5 +342,18 @@
         })
         console.trace(r)
         callback(r.trim());
+    }
+
+    async function createLog(uinfo, uname, uquery, uresponse){
+        let date = new Date();
+        let fileName = `${date.getFullYear()}-${date.getMonth()}-${date.getDay()}.txt`;
+        let log = {
+            дата: `${date.getFullYear()}.${date.getMonth()}.${date.getDay()} time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`,
+            пользователь: uinfo,
+            имя_пользователя: uinfo,
+            запрос_к_боту: uquery,
+            ответил_бот: uresponse
+        }
+        fs.appendFile(`${PathData.path_to_logs}/${fileName}`, `\n${log}`, function () {})
     }
 }.call(this))

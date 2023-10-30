@@ -1,5 +1,6 @@
 const defaultPath = `${__dirname}/storage/`,
     Key = "6622325045:AAGvsTESM1g0b0DRbkXt5Wg42R7foGsizHE",
+    GoogleKey = "AIzaSyAANJU4-nVS9B92Zea0NUqkloKvfoGxTA8",
     telegramSettings = {
         parse_mode: "markdown"
     },
@@ -27,5 +28,6 @@ module.exports = {
     HelpList,
     AuthLists,
     Key,
-    telegramSettings
+    telegramSettings,
+    GoogleKey
 };

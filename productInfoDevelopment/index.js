@@ -18,20 +18,35 @@ client.on('message', async function (msg) {
     SecuritySystem.isAdmin(msg.from.username, async function (result) { /** works */
         if (result === true)
             try{
-                    await client.sendMessage(msg.chat.id,`${msg.video.file_id} ID видео, для вставки в поле с видео`)
-            }catch (e) {
-                console.log(e)
+                await client.sendMessage(msg.chat.id,`${msg.video.file_id} ID видео, для вставки в поле с видео`);
+            }catch (e) {}
+        try{
+            let filepath= `./lib/storage/files/${msg.document.file_name}`;
+            fs.writeFile(filepath, '-',{}, function () {})
+            let fileWriter= fs.createWriteStream(filepath); //creating stream for writing to file
+            const getReadStreamPromise = () => {
+                return new Promise((resolve, reject) => {
+                    const stream = client.getFileStream(msg.document.file_id); //getting stream to file bytes
+                    stream.on('data', (chunk) => {
+                        fileWriter.write(chunk); //copying to our file chunk by chunk
+                    })
+                    stream.on('error', (err) => {
+                        reject(err);
+                    })
+                    stream.on('end', () => {
+                        client.sendMessage(msg.chat.id, `Файл успешно сохранен, имя файла: ${msg.document.file_name}`)
+                        resolve();
+                    })
+                })
             }
+            await getReadStreamPromise();
+        }
+        catch (e) {}
     })
     console.log('message-received: [')
     console.log(msg.from)
     console.log(']')
-    // await DataHandler.logger({
-    //     user_info: msg.from,
-    //     user_name: msg.from.username,
-    //     user_query: msg.text,
-    //     user_response: !0
-    // })
+
     SecuritySystem.isBanned(msg.from.username, async function (result) {
         console.log(result)
         if (result === true) { /** works */
@@ -52,23 +67,29 @@ client.on('message', async function (msg) {
         } else {
             for (const u of JSON.parse(SecuritySystem.getDataAuth_user())) {
                 if (msg.from.username === u) { /** works */
+                    await DataHandler.logger({
+                        user_info: msg.from,
+                        user_name: msg.from.username,
+                        user_query: msg.text,
+                        user_response: !0
+                    })
                     console.log(true)
                     if (msg.text === '/logrender') {
                         await client.sendDocument(msg.chat.id.toString(), DataHandler.getRenderLog(msg.from.username, msg.from.id, msg.message_id, getDate()))
                     }
                     else if (msg.text === '/getbanlist') { /** works */
-                    SecuritySystem.isAdmin(msg.from.username, async function (result) {
-                        if (result === true)
-                            try{
-                                await client.sendMessage(msg.chat.id, Admin._getbanlist().content.toString())
-                            }catch (e) {
-                                try {
-                                    await client.sendDocument(msg.chat.id, Admin._getbanlist().path)
-                                } catch (e) {
-                                    await client.sendMessage(msg.chat.id, 'Произошла ошибка при получении файла')
+                        SecuritySystem.isAdmin(msg.from.username, async function (result) {
+                            if (result === true)
+                                try{
+                                    await client.sendMessage(msg.chat.id, Admin._getbanlist().content.toString())
+                                }catch (e) {
+                                    try {
+                                        await client.sendDocument(msg.chat.id, Admin._getbanlist().path)
+                                    } catch (e) {
+                                        await client.sendMessage(msg.chat.id, 'Произошла ошибка при получении файла')
+                                    }
                                 }
-                            }
-                    })
+                        })
                     }
                     else if (msg.text === '/getmemberslist') { /** works */
                     SecuritySystem.isAdmin(msg.from.username, async function (result) {
