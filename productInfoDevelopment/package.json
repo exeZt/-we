@@ -1,0 +1,16 @@
+{
+  "name": "productinfobot_release",
+  "version": "1.1.1",
+  "description": "AlfaBank SVK telegram information bot based on NodeJs and TelegramAPI",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "exezt-",
+  "license": "ISC",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.63.0",
+    "nodemailer": "^6.9.5",
+    "xhr2": "^0.2.1"
+  }
+}
